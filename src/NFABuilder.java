@@ -4,8 +4,8 @@ import java.util.Set;
 //TODO add processing of +
 public class NFABuilder {
     private static int stateIdCounter = 0;
-    public static NFA convertToNFA(SyntaxTreeNode syntaxTree) {
 
+    public static NFA syntaxTreeToNFA(SyntaxTreeNode syntaxTree) {
 
         if (syntaxTree == null) {
             return null;
@@ -13,69 +13,72 @@ public class NFABuilder {
 
         NFA automaton = new NFA();
 
+        // handle concatenation
         if (syntaxTree.operation == SyntaxTreeBuilder.CONCAT) {
-            // Handle concatenation
-            NFA leftNFA = convertToNFA(syntaxTree.left);
-            NFA rightNFA = convertToNFA(syntaxTree.right);
-            // Connect leftNFA's end state to rightNFA's start state with ε-transitions.
+
+            // build left and right automatons
+            NFA leftNFA = syntaxTreeToNFA(syntaxTree.left);
+            NFA rightNFA = syntaxTreeToNFA(syntaxTree.right);
+            // connect leftNFA's end state to rightNFA's start state with ε-transition
             NFAState startState = leftNFA.getStartState();
             leftNFA.getAcceptState().addTransition(NFA.EPSILON, rightNFA.getStartState());
             NFAState endState = rightNFA.getAcceptState();
-            // Update start and end states accordingly.
+
             automaton.addState(startState);
             automaton.addState(endState);
-        } else if (syntaxTree.operation == SyntaxTreeBuilder.ALTERN) {
-
+        } else if (syntaxTree.operation == SyntaxTreeBuilder.ALTERN) { // handle alternation
+            // create new start and end states
             NFAState startState = new NFAState(stateIdCounter++, true, false);
             NFAState endState = new NFAState(stateIdCounter++, false, true);
-            // Handle alternation
-            NFA leftNFA = convertToNFA(syntaxTree.left);
-            NFA rightNFA = convertToNFA(syntaxTree.right);
-            // Create new start and end states, connect them to leftNFA and rightNFA with ε-transitions.
+
+            // create sub-automatons for each option
+            NFA leftNFA = syntaxTreeToNFA(syntaxTree.left);
+            NFA rightNFA = syntaxTreeToNFA(syntaxTree.right);
+
+            // connect startState to leftNFA and rightNFA with ε-transitions
             startState.addTransition(NFA.EPSILON, leftNFA.getStartState());
             startState.addTransition(NFA.EPSILON, rightNFA.getStartState());
 
+            // connect endState to leftNFA and rightNFA with ε-transitions
             leftNFA.getAcceptState().addTransition(NFA.EPSILON, endState);
             rightNFA.getAcceptState().addTransition(NFA.EPSILON, endState);
-            // Update start and end states accordingly.
+
+
             automaton.addState(startState);
             automaton.addState(endState);
-        } else if (syntaxTree.operation == SyntaxTreeBuilder.ETOILE) {
-
+        } else if (syntaxTree.operation == SyntaxTreeBuilder.ASTERISK) { // handle kleene star
+            // create new start and end states
             NFAState startState = new NFAState(stateIdCounter++, true, false);
             NFAState endState = new NFAState(stateIdCounter++, false, true);
-            // Handle Kleene star
-            NFA subNFA = convertToNFA(syntaxTree.left);
-            // Create new start and end states, connect them to subNFA with ε-transitions.
+
+            // create sub-automaton
+            NFA subNFA = syntaxTreeToNFA(syntaxTree.left);
+            // connect startState to subNFA with ε-transitions
             startState.addTransition(NFA.EPSILON, subNFA.getStartState());
             startState.addTransition(NFA.EPSILON, endState);
-
+            // connect endState to subNFA with ε-transitions
             subNFA.getAcceptState().addTransition(NFA.EPSILON, endState);
-            // Also, add ε-transitions from subNFA's end state to its start state.
+            // also add ε-transition from subNFA's end state to its start state
             subNFA.getAcceptState().addTransition(NFA.EPSILON, subNFA.getStartState());
-            // Update start and end states accordingly.
+
             automaton.addState(startState);
             automaton.addState(endState);
-        } else {
-            // Handle character or state
-            // Create a simple NFA with a single state, transition labeled with syntaxTree.operation.
+        } else { // handle character
+            // create a simple NFA with a single state, transition labeled with syntaxTree.operation
             NFAState startState = new NFAState(stateIdCounter++, true, false);
             NFAState endState = new NFAState(stateIdCounter++, false, true);
 
             startState.addTransition(syntaxTree.operation, endState);
-            // Update start and end states accordingly.
+
             automaton.addState(startState);
             automaton.addState(endState);
         }
 
-
-        // Return the NFA for the current subtree.
-        // You'll need to return the start and end states.
+        // return the NFA for the current subtree
         return automaton;
-
-        
     }
 
+    // Method to visualize NFA in language DOT https://graphs.grevian.org/graph
     public static String generateDOT(NFA nfa) {
         StringBuilder dot = new StringBuilder();
 
@@ -85,13 +88,10 @@ public class NFABuilder {
         dot.append("  node [shape=circle];\n");
         dot.append("  start [shape=point];\n");
 
-        // Define start state
+        // define start state
         dot.append("  start -> ").append(nfa.getStartState().getId()).append(";\n");
 
-        // Define accept state
-        dot.append("  ").append(nfa.getAcceptState().getId()).append(" [shape=doublecircle];\n");
-
-        // Define transitions
+        // define transitions
         Set<NFAState> visited = new HashSet<>();
         generateDOTRecursive(dot, nfa.getStartState(), visited);
 
@@ -109,10 +109,18 @@ public class NFABuilder {
             for (NFAState toState : state.getTransitions().get(symbol)) {
                 int toStateId = toState.getId();
                 char symbolChar = (char) symbol;
-                if(symbol == NFA.EPSILON)
+
+                if (symbol == NFA.EPSILON)
                     symbolChar = 'ε';
+
+                if (symbol == SyntaxTreeBuilder.DOT)
+                    symbolChar = '.';
+
                 dot.append("  ").append(fromStateId).append(" -> ").append(toStateId)
                         .append(" [label=\"").append(symbolChar).append("\"];\n");
+
+                if (toState.isAccept() && !visited.contains(toState))
+                    dot.append("  ").append(toStateId).append(" [shape=doublecircle];\n");
 
                 if (!visited.contains(toState)) {
                     generateDOTRecursive(dot, toState, visited);

@@ -1,29 +1,25 @@
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class DFA {
     private final Map<Integer, DFAState> states;
     private DFAState startState;
-    private DFAState acceptState;
+    private final Set<DFAState> acceptStates;
     private final Set<Integer> alphabet;
 
     public DFA(Set<Integer> alphabet) {
         this.alphabet = alphabet;
         this.states = new HashMap<>();
-    }
-    public DFA(DFAState startState, Set<Integer> alphabet) {
-        this.startState = startState;
-        this.alphabet = alphabet;
-        this.states = new HashMap<>();
-        addState(startState);
+        this.acceptStates = new HashSet<>();
     }
 
     public DFAState getStartState() {
         return startState;
     }
-    public DFAState getAcceptState() {
-        return acceptState;
+    public Set<DFAState> getAcceptStates() {
+        return acceptStates;
     }
 
     public void addState(DFAState state) {
@@ -32,7 +28,7 @@ public class DFA {
             startState = state;
         }
         if (state.isAccept()) {
-            acceptState = state;
+            acceptStates.add(state);
         }
     }
 

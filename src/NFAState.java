@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class NFAState {
-
     private final int id;
     private final Map<Integer, Set<NFAState>> transitions;
     private final boolean isStart;
@@ -36,6 +35,7 @@ public class NFAState {
     public Set<NFAState> getTransitions(int symbol) {
         return transitions.getOrDefault(symbol, new HashSet<>());
     }
+
     public Map<Integer, Set<NFAState>> getTransitions() {
         return transitions;
     }

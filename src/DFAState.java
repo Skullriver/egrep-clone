@@ -1,15 +1,11 @@
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class DFAState {
-
     private final int id;
     private final Map<Integer, DFAState> transitions;
     private boolean isStart;
     private boolean isAccept;
-
     public DFAState(int id, boolean isStart, boolean isAccept) {
         this.id = id;
         this.isStart = isStart;
@@ -32,6 +28,7 @@ public class DFAState {
     public boolean isAccept() {
         return isAccept;
     }
+
     public void setAccept() {
         isAccept = true;
     }
@@ -40,9 +37,6 @@ public class DFAState {
         transitions.put(symbol, nextState);
     }
 
-    public void removeTransition(int symbol) {
-        transitions.remove(symbol);
-    }
     public void removeAllTransition() {
         transitions.clear();
     }
@@ -50,6 +44,7 @@ public class DFAState {
     public DFAState getTransitions(int symbol) {
         return transitions.get(symbol);
     }
+
     public Map<Integer, DFAState> getTransitions() {
         return transitions;
     }
@@ -61,7 +56,7 @@ public class DFAState {
             int symbol = entry.getKey();
             DFAState targetState = entry.getValue();
 
-            // Include the symbol and target state IDs in the hash code
+            // include the symbol and target state IDs in the hash code
             hashCode = hashCode * 31 + symbol;
             hashCode = hashCode * 31 + targetState.getId();
         }
