@@ -6,6 +6,7 @@ public class DFAState {
     private final Map<Integer, DFAState> transitions;
     private boolean isStart;
     private boolean isAccept;
+
     public DFAState(int id, boolean isStart, boolean isAccept) {
         this.id = id;
         this.isStart = isStart;

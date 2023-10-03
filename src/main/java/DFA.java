@@ -5,9 +5,9 @@ import java.util.Set;
 
 public class DFA {
     private final Map<Integer, DFAState> states;
-    private DFAState startState;
     private final Set<DFAState> acceptStates;
     private final Set<Integer> alphabet;
+    private DFAState startState;
 
     public DFA(Set<Integer> alphabet) {
         this.alphabet = alphabet;
@@ -18,6 +18,7 @@ public class DFA {
     public DFAState getStartState() {
         return startState;
     }
+
     public Set<DFAState> getAcceptStates() {
         return acceptStates;
     }

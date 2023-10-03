@@ -1,0 +1,11 @@
+DFA.class
+Main.class
+NFABuilder.class
+Pair.class
+KMP.class
+NFA.class
+DFAState.class
+DFABuilder.class
+NFAState.class
+SyntaxTreeNode.class
+SyntaxTreeBuilder.class
