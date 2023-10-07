@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -30,7 +32,7 @@ public class Main {
 
                     // continue searching for the next match
                     currentState = minDfa.getStartState();
-                    textIndex = matchStartIndex + 1;
+                    textIndex = matchEndIndex + 1;
                     matchStartIndex = textIndex;
                 } else {
                     textIndex++;
@@ -44,16 +46,6 @@ public class Main {
         }
 
         return matches;
-    }
-
-    public static String readText(File file) {
-        String data = "";
-        try {
-            data = new String(Files.readAllBytes(file.toPath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return data;
     }
 
     public static boolean isSimpleConcatenation(String regex) {
@@ -96,6 +88,7 @@ public class Main {
 
         String regEx, filename;
         File file;
+        boolean print = true;
 
         if (args.length < 2) {
             System.out.println("To use : \"<RegEx>\" <filename>");
@@ -105,6 +98,10 @@ public class Main {
         if (args[1].length() < 2) {
             System.out.println("To use : \"<RegEx>\" <filename>");
             return;
+        }
+
+        if (args.length == 3) {
+            if (args[2].equals("--no-print")) print = false;
         }
 
         regEx = args[0];
@@ -119,40 +116,52 @@ public class Main {
             return;
         }
 
-        String text = readText(file);
-        String[] lines = text.split("\\n");
-
         long startTime = System.currentTimeMillis();
 
         boolean simpleConcat = isSimpleConcatenation(regEx);
 
         if (simpleConcat) {
             KMP kmp = new KMP(regEx);
-            for (String line : lines) {
-                List<Pair> matches = kmp.search(line);
-                printResult(matches, line);
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    List<Pair> matches = kmp.search(line);
+                    if (print) printResult(matches, line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
         } else {
+            long startTree = System.currentTimeMillis();
             SyntaxTreeNode root = SyntaxTreeBuilder.buildSyntaxTree(regEx);
+//            System.out.println("Time tree: " + (System.currentTimeMillis() - startTree) + "ms");
+            long startNFA = System.currentTimeMillis();
             NFA nfa = NFABuilder.syntaxTreeToNFA(root);
-            //System.out.println(NFABuilder.generateDOT(nfa));
+//            System.out.println("Time NFA: " + (System.currentTimeMillis() - startNFA) + "ms");
+//            System.out.println(NFABuilder.generateDOT(nfa));
+            long startDFA = System.currentTimeMillis();
             DFA dfa = DFABuilder.NFAToDFA(nfa);
+//            System.out.println("Time DFA: " + (System.currentTimeMillis() - startDFA) + "ms");
             //System.out.println(DFABuilder.generateDOT(dfa));
+            long startMin = System.currentTimeMillis();
             DFA minDfa = DFABuilder.minimizeDFA(dfa);
-            //System.out.println(DFABuilder.generateDOT(minDfa));
-            for (String line : lines) {
-                List<Pair> matches = search(minDfa, line);
-                printResult(matches, line);
+//            System.out.println("Time min: " + (System.currentTimeMillis() - startMin) + "ms");
+//            System.out.println(DFABuilder.generateDOT(minDfa));
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    List<Pair> matches = search(minDfa, line);
+                    if (print) printResult(matches, line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-
 //
         long searchEndTime = System.currentTimeMillis();
 
-        System.out.println("Time used: " + (searchEndTime - startTime) + "ms");
-
-        /////////////////
+//        System.out.println("Time total: " + (searchEndTime - startTime) + "ms");
 
     }
 }
